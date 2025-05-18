@@ -286,6 +286,64 @@ io.on('connection', (socket) => {
   });
 });
 
+// Update attendee details (name and queue number)
+app.put('/api/attendees/:id', (req, res) => {
+  const id = parseInt(req.params.id);
+  console.log(`Received request to update attendee details for ID: ${id}`);
+  const { name, queueNumber } = req.body;
+  
+  try {
+    const attendee = attendees.find(a => a.id === id);
+    
+    if (!attendee) {
+      console.log(`Attendee with ID ${id} not found`);
+      return res.status(404).json({ message: 'Attendee not found' });
+    }
+    
+    // Check if the queue number is already in use by another attendee
+    if (queueNumber !== undefined && queueNumber !== attendee.queueNumber) {
+      const queueExists = attendees.some(a => a.id !== id && a.queueNumber === queueNumber);
+      if (queueExists) {
+        return res.status(400).json({ message: 'Queue number already in use' });
+      }
+      
+      // Update ready and missed lists if queue number changes
+      if (attendee.status === 'ready') {
+        readyForCollection = readyForCollection.filter(num => num !== attendee.queueNumber);
+        readyForCollection.push(queueNumber);
+      } else if (attendee.status === 'missed') {
+        missedNumbers = missedNumbers.filter(num => num !== attendee.queueNumber);
+        missedNumbers.push(queueNumber);
+      } else if (attendee.status === 'collected') {
+        collectedNumbers = collectedNumbers.filter(num => num !== attendee.queueNumber);
+        collectedNumbers.push(queueNumber);
+      }
+      
+      // Update the queue number
+      attendee.queueNumber = queueNumber;
+    }
+    
+    // Update the name if provided
+    if (name !== undefined) {
+      attendee.name = name;
+    }
+    
+    // Emit updates
+    io.emit('displayUpdated', { 
+      readyForCollection, 
+      missedNumbers 
+    });
+    
+    io.emit('attendeesUpdated', { attendees });
+    
+    console.log(`Successfully updated attendee details for ID: ${id}`);
+    return res.json(attendee);
+  } catch (error) {
+    console.error(`Error in update attendee endpoint:`, error);
+    return res.status(500).json({ message: 'Server error', error: error.message });
+  }
+});
+
 // Check for missed collections every minute
 setInterval(() => {
   const fiveMinutesAgo = Date.now() - 5 * 60 * 1000;

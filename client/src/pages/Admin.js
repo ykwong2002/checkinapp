@@ -21,7 +21,7 @@ import {
   Chip,
   Stack
 } from '@mui/material';
-import { DataGrid, GridToolbar } from '@mui/x-data-grid';
+import { DataGrid } from '@mui/x-data-grid';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import PersonAddIcon from '@mui/icons-material/PersonAdd';
 import HotelIcon from '@mui/icons-material/Hotel';
@@ -219,6 +219,41 @@ const Admin = () => {
     }
   };
 
+  // Handle updating attendee details (name or queue number)
+  const handleUpdateAttendee = async (params) => {
+    const { id, field, value } = params;
+    
+    if (value === params.row[field]) {
+      return; // No change, don't send an update
+    }
+    
+    try {
+      console.log(`Updating attendee ${id} ${field} to: ${value}`);
+      
+      // Create the update object with only the changed field
+      const updateData = { [field]: value };
+      
+      const response = await axios.put(`${API_URL}/attendees/${id}`, updateData);
+      
+      console.log('Update response:', response.data);
+      showAlert(`Successfully updated attendee ${field}`, 'success');
+      
+      // The data will be updated automatically via socket
+    } catch (error) {
+      console.error(`Error updating attendee ${field}:`, error);
+      if (error.response) {
+        showAlert(`Update failed: ${error.response.data.message || 'Server error'}`, 'error');
+      } else if (error.request) {
+        showAlert('Server did not respond. Please check if server is running.', 'error');
+      } else {
+        showAlert(`Request error: ${error.message}`, 'error');
+      }
+      
+      // Return the update as rejected to revert the cell to its previous value
+      return Promise.reject(error);
+    }
+  };
+
   const showAlert = (message, severity) => {
     setAlertInfo({
       open: true,
@@ -239,6 +274,12 @@ const Admin = () => {
       width: 150,
       headerAlign: 'center',
       align: 'center',
+      editable: true,
+      type: 'number',
+      preProcessEditCellProps: (params) => {
+        const hasError = isNaN(params.props.value) || params.props.value <= 0;
+        return { ...params.props, error: hasError };
+      },
       renderCell: (params) => (
         <Typography variant="body1" fontWeight="medium">
           {params.value}
@@ -250,6 +291,11 @@ const Admin = () => {
       headerName: 'Attendee Name', 
       flex: 1,
       minWidth: 200,
+      editable: true,
+      preProcessEditCellProps: (params) => {
+        const hasError = !params.props.value || params.props.value.trim() === '';
+        return { ...params.props, error: hasError };
+      },
       renderCell: (params) => (
         <Typography variant="body1">
           {params.value}
@@ -462,6 +508,10 @@ const Admin = () => {
             Attendee Management
           </Typography>
           
+          <Typography variant="caption" color="text.secondary" sx={{ ml: 0.5 }}>
+            Double-click on any Name or Queue Number to edit it directly.
+          </Typography>
+          
           <Box sx={{ display: 'flex', gap: 2 }}>
             <Button 
               variant="contained" 
@@ -499,6 +549,32 @@ const Admin = () => {
             loading={loading}
             autoHeight
             disableRowSelectionOnClick
+            processRowUpdate={(newRow, oldRow) => {
+              // If queue number changed
+              if (newRow.queueNumber !== oldRow.queueNumber) {
+                return handleUpdateAttendee({
+                  id: newRow.id, 
+                  field: 'queueNumber', 
+                  value: newRow.queueNumber,
+                  row: oldRow
+                }).then(() => newRow);
+              }
+              
+              // If name changed
+              if (newRow.name !== oldRow.name) {
+                return handleUpdateAttendee({
+                  id: newRow.id, 
+                  field: 'name', 
+                  value: newRow.name,
+                  row: oldRow
+                }).then(() => newRow);
+              }
+              
+              return newRow;
+            }}
+            onProcessRowUpdateError={(error) => {
+              console.error('Error processing row update:', error);
+            }}
             getRowClassName={(params) => 
               params.row.status === 'ready' ? 'ready-row' : 
               params.row.status === 'missed' ? 'missed-row' : ''
@@ -513,9 +589,16 @@ const Admin = () => {
               '& .MuiDataGrid-columnHeaderTitle': {
                 fontWeight: 'bold',
               },
-            }}
-            components={{
-              Toolbar: GridToolbar,
+              '& .MuiDataGrid-cell--editable': {
+                '&:hover': {
+                  backgroundColor: 'rgba(0, 0, 0, 0.04)',
+                  cursor: 'pointer'
+                }
+              },
+              '& .MuiDataGrid-cell--editing': {
+                backgroundColor: 'rgba(25, 118, 210, 0.08)',
+                boxShadow: '0 0 0 2px rgba(25, 118, 210, 0.25)'
+              },
             }}
           />
         </Box>
