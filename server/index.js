@@ -10,15 +10,21 @@ const fs = require('fs');
 // Initialize app
 const app = express();
 const server = http.createServer(app);
+
+// CORS configuration
 const io = socketIo(server, {
   cors: {
     origin: '*',
-    methods: ['GET', 'POST']
+    methods: ['GET', 'POST'],
+    credentials: true
   }
 });
 
 // Middleware
-app.use(cors());
+app.use(cors({
+  origin: '*',
+  credentials: true
+}));
 app.use(express.json());
 
 // File upload configuration
@@ -405,4 +411,7 @@ if (process.env.NODE_ENV === 'production') {
 
 // Start server
 const PORT = process.env.PORT || 5001;
-server.listen(PORT, () => console.log(`Server running on port ${PORT}`)); 
+server.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+
+// Export the Express API
+module.exports = app; 

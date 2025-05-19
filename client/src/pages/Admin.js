@@ -36,10 +36,11 @@ import LogoutIcon from '@mui/icons-material/Logout';
 import axios from 'axios';
 import io from 'socket.io-client';
 import { useNavigate } from 'react-router-dom';
+import config from '../config';
 
-// Backend API URL - using direct values instead of environment variables
-const API_URL = 'http://localhost:5001/api';
-const socket = io('http://localhost:5001');
+// Update API URL and socket connection
+const API_URL = `${config.API_URL}/api`;
+const socket = io(config.SOCKET_URL);
 
 const Admin = () => {
   const [attendees, setAttendees] = useState([]);

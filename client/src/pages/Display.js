@@ -14,9 +14,10 @@ import {
 import MeetingRoomIcon from '@mui/icons-material/MeetingRoom';
 import DoNotDisturbIcon from '@mui/icons-material/DoNotDisturb';
 import io from 'socket.io-client';
+import config from '../config';
 
-// Using direct socket URL instead of environment variable
-const socket = io('http://localhost:5001');
+// Update socket connection
+const socket = io(config.SOCKET_URL);
 
 const Display = () => {
   const [readyNumbers, setReadyNumbers] = useState([]);
