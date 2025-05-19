@@ -31,8 +31,11 @@ import DashboardIcon from '@mui/icons-material/Dashboard';
 import PeopleAltIcon from '@mui/icons-material/PeopleAlt';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import MeetingRoomIcon from '@mui/icons-material/MeetingRoom';
+import DeleteSweepIcon from '@mui/icons-material/DeleteSweep';
+import LogoutIcon from '@mui/icons-material/Logout';
 import axios from 'axios';
 import io from 'socket.io-client';
+import { useNavigate } from 'react-router-dom';
 
 // Backend API URL - using direct values instead of environment variables
 const API_URL = 'http://localhost:5001/api';
@@ -42,10 +45,12 @@ const Admin = () => {
   const [attendees, setAttendees] = useState([]);
   const [loading, setLoading] = useState(true);
   const [openAddDialog, setOpenAddDialog] = useState(false);
+  const [openResetDialog, setOpenResetDialog] = useState(false);
   const [newAttendeeName, setNewAttendeeName] = useState('');
   const [openUploadDialog, setOpenUploadDialog] = useState(false);
   const [selectedFile, setSelectedFile] = useState(null);
   const [alertInfo, setAlertInfo] = useState({ open: false, message: '', severity: 'info' });
+  const navigate = useNavigate();
   
   // Statistics
   const [stats, setStats] = useState({
@@ -254,6 +259,17 @@ const Admin = () => {
     }
   };
 
+  const handleResetData = async () => {
+    try {
+      await axios.delete(`${API_URL}/attendees/reset`);
+      setOpenResetDialog(false);
+      showAlert('All data has been reset successfully', 'success');
+    } catch (error) {
+      console.error('Error resetting data:', error);
+      showAlert('Failed to reset data', 'error');
+    }
+  };
+
   const showAlert = (message, severity) => {
     setAlertInfo({
       open: true,
@@ -264,6 +280,11 @@ const Admin = () => {
 
   const handleCloseAlert = () => {
     setAlertInfo({ ...alertInfo, open: false });
+  };
+
+  const handleLogout = () => {
+    sessionStorage.removeItem('isAuthenticated');
+    navigate('/login');
   };
 
   // Enhanced columns with better styling
@@ -412,14 +433,24 @@ const Admin = () => {
 
   return (
     <Container maxWidth="xl" sx={{ mt: 4, mb: 8 }}>
-      <Box sx={{ mb: 4 }}>
-        <Typography variant="h4" component="h1" gutterBottom color="primary" sx={{ fontWeight: 600 }}>
-          <DashboardIcon sx={{ mr: 1, mb: -0.5 }} />
-          Check-in Admin Panel
-        </Typography>
-        <Typography variant="body1" color="text.secondary">
-          Manage attendees and queue status for the check-in process
-        </Typography>
+      <Box sx={{ mb: 4, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <Box>
+          <Typography variant="h4" component="h1" gutterBottom color="primary" sx={{ fontWeight: 600 }}>
+            <DashboardIcon sx={{ mr: 1, mb: -0.5 }} />
+            Check-in Admin Panel
+          </Typography>
+          <Typography variant="body1" color="text.secondary">
+            Manage attendees and queue status for the check-in process
+          </Typography>
+        </Box>
+        <Button
+          variant="outlined"
+          color="error"
+          startIcon={<LogoutIcon />}
+          onClick={handleLogout}
+        >
+          Logout
+        </Button>
       </Box>
       
       {/* Statistics Cards */}
@@ -528,6 +559,14 @@ const Admin = () => {
             >
               Import from Spreadsheet
             </Button>
+            <Button 
+              variant="contained" 
+              color="error" 
+              startIcon={<DeleteSweepIcon />} 
+              onClick={() => setOpenResetDialog(true)}
+            >
+              Reset Data
+            </Button>
           </Box>
         </Box>
         
@@ -537,10 +576,10 @@ const Admin = () => {
           <DataGrid
             rows={attendees}
             columns={columns}
-            pageSizeOptions={[10, 25, 50, 100]}
+            pageSizeOptions={[1000]}
             initialState={{
               pagination: {
-                paginationModel: { pageSize: 25 },
+                paginationModel: { pageSize: 1000 },
               },
               sorting: {
                 sortModel: [{ field: 'queueNumber', sort: 'asc' }],
@@ -675,6 +714,50 @@ const Admin = () => {
             startIcon={<CloudUploadIcon />}
           >
             Upload
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Reset Confirmation Dialog */}
+      <Dialog 
+        open={openResetDialog} 
+        onClose={() => setOpenResetDialog(false)}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle>
+          <Box sx={{ display: 'flex', alignItems: 'center' }}>
+            <DeleteSweepIcon color="error" sx={{ mr: 1 }} />
+            Reset All Data
+          </Box>
+        </DialogTitle>
+        <DialogContent>
+          <Typography variant="body1" sx={{ mt: 2 }}>
+            Are you sure you want to reset all data? This action will:
+          </Typography>
+          <ul style={{ marginTop: '8px', marginBottom: '8px' }}>
+            <li>Clear all attendees from the system</li>
+            <li>Reset all queue numbers</li>
+            <li>Clear all ready and missed collections</li>
+          </ul>
+          <Typography variant="body2" color="error" fontWeight="bold">
+            This action cannot be undone!
+          </Typography>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 3 }}>
+          <Button 
+            onClick={() => setOpenResetDialog(false)} 
+            variant="outlined"
+          >
+            Cancel
+          </Button>
+          <Button 
+            onClick={handleResetData} 
+            variant="contained" 
+            color="error"
+            startIcon={<DeleteSweepIcon />}
+          >
+            Reset All Data
           </Button>
         </DialogActions>
       </Dialog>
