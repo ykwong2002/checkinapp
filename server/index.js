@@ -7,6 +7,12 @@ const xlsx = require('xlsx');
 const path = require('path');
 const fs = require('fs');
 
+// Explicitly set NODE_ENV for Vercel
+if (process.env.VERCEL) {
+  process.env.NODE_ENV = 'production';
+  console.log('Running in Vercel production environment');
+}
+
 // Initialize app
 const app = express();
 const server = http.createServer(app);
