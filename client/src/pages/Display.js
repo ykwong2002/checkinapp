@@ -17,7 +17,10 @@ import io from 'socket.io-client';
 import config from '../config';
 
 // Update socket connection
-const socket = io(config.SOCKET_URL);
+const socket = io(config.SOCKET_URL, {
+  path: '/socket.io',
+  transports: ['websocket', 'polling']
+});
 
 const Display = () => {
   const [readyNumbers, setReadyNumbers] = useState([]);

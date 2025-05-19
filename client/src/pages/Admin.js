@@ -40,7 +40,10 @@ import config from '../config';
 
 // Update API URL and socket connection
 const API_URL = `${config.API_URL}/api`;
-const socket = io(config.SOCKET_URL);
+const socket = io(config.SOCKET_URL, {
+  path: '/socket.io',
+  transports: ['websocket', 'polling']
+});
 
 const Admin = () => {
   const [attendees, setAttendees] = useState([]);

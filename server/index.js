@@ -17,7 +17,10 @@ const io = socketIo(server, {
     origin: '*',
     methods: ['GET', 'POST'],
     credentials: true
-  }
+  },
+  path: '/socket.io',
+  transports: ['websocket', 'polling'],
+  allowEIO3: true
 });
 
 // Middleware
@@ -30,6 +33,7 @@ app.use(express.json());
 // Serve static files in production
 if (process.env.NODE_ENV === 'production') {
   app.use(express.static(path.join(__dirname, '../client/build')));
+  console.log('Serving static files from:', path.join(__dirname, '../client/build'));
 }
 
 // File upload configuration
@@ -408,7 +412,10 @@ setInterval(() => {
 // Serve React app in production
 if (process.env.NODE_ENV === 'production') {
   app.get('*', (req, res) => {
-    res.sendFile(path.join(__dirname, '../client/build', 'index.html'));
+    if (!req.path.startsWith('/api') && !req.path.startsWith('/socket.io')) {
+      console.log('Serving React app for path:', req.path);
+      res.sendFile(path.join(__dirname, '../client/build', 'index.html'));
+    }
   });
 }
 
