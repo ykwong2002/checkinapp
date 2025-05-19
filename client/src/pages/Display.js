@@ -119,24 +119,23 @@ const Display = () => {
                   <Card 
                     sx={{ 
                       bgcolor: theme => theme.palette.success.main, 
-                      minWidth: { xs: '90px', sm: '110px', md: '130px' },
-                      height: { xs: '90px', sm: '110px', md: '130px' },
+                      minWidth: { xs: '120px', sm: '150px', md: '180px' },
+                      height: { xs: '120px', sm: '150px', md: '180px' },
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      borderRadius: 2,
-                      boxShadow: '0px 4px 8px rgba(0, 0, 0, 0.15)'
+                      borderRadius: 3,
+                      boxShadow: '0px 8px 15px rgba(0, 0, 0, 0.2)'
                     }}
                   >
-                    <CardContent sx={{ p: 1 }}>
+                    <CardContent>
                       <Typography 
-                        variant="h3" 
+                        variant="h2" 
                         align="center" 
                         fontWeight="bold"
                         sx={{ 
                           color: 'white',
-                          fontSize: { xs: '1.8rem', sm: '2.2rem', md: '2.5rem' },
-                          lineHeight: 1
+                          fontSize: { xs: '2.5rem', sm: '3.5rem', md: '4rem' }
                         }}
                       >
                         {number}

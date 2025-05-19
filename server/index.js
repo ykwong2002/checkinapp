@@ -117,31 +117,6 @@ app.get('/api/attendees', (req, res) => {
   res.json(attendees);
 });
 
-// Reset all attendees
-app.delete('/api/attendees/reset', (req, res) => {
-  try {
-    // Clear all data
-    attendees = [];
-    readyForCollection = [];
-    missedNumbers = [];
-    collectedNumbers = [];
-    currentId = 1;
-
-    // Emit updates to all connected clients
-    io.emit('displayUpdated', { 
-      readyForCollection, 
-      missedNumbers 
-    });
-    
-    io.emit('attendeesUpdated', { attendees });
-    
-    res.json({ message: 'All data has been reset successfully' });
-  } catch (error) {
-    console.error('Error resetting data:', error);
-    res.status(500).json({ message: 'Error resetting data', error: error.message });
-  }
-});
-
 // Add a new attendee
 app.post('/api/attendees', (req, res) => {
   const { name } = req.body;

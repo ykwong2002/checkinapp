@@ -1,25 +1,20 @@
 import React from 'react';
-import { Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route } from 'react-router-dom';
 import Admin from './pages/Admin';
 import Display from './pages/Display';
-import Login from './pages/Login';
-import ProtectedRoute from './components/ProtectedRoute';
+import Header from './components/Header';
 
 function App() {
   return (
-    <Routes>
-      <Route path="/" element={<Display />} />
-      <Route path="/login" element={<Login />} />
-      <Route 
-        path="/admin" 
-        element={
-          <ProtectedRoute>
-            <Admin />
-          </ProtectedRoute>
-        } 
-      />
-      <Route path="*" element={<Navigate to="/" replace />} />
-    </Routes>
+    <div className="app">
+      <Header />
+      <div className="container">
+        <Routes>
+          <Route path="/" element={<Display />} />
+          <Route path="/admin" element={<Admin />} />
+        </Routes>
+      </div>
+    </div>
   );
 }
 
