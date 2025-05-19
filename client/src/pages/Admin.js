@@ -9,6 +9,7 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
+  DialogContentText,
   Snackbar,
   Alert,
   IconButton,
@@ -31,13 +32,12 @@ import DashboardIcon from '@mui/icons-material/Dashboard';
 import PeopleAltIcon from '@mui/icons-material/PeopleAlt';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import MeetingRoomIcon from '@mui/icons-material/MeetingRoom';
+import RestartAltIcon from '@mui/icons-material/RestartAlt';
+import LogoutIcon from '@mui/icons-material/Logout';
 import axios from 'axios';
 import io from 'socket.io-client';
-<<<<<<< HEAD
 import { useNavigate } from 'react-router-dom';
 import config from '../config';
-=======
->>>>>>> parent of 7aeae80 (Added password protection)
 
 // Update API URL and socket connection
 const API_URL = `${config.API_URL}/api`;
@@ -47,6 +47,7 @@ const socket = io(config.SOCKET_URL, {
 });
 
 const Admin = () => {
+  const navigate = useNavigate();
   const [attendees, setAttendees] = useState([]);
   const [loading, setLoading] = useState(true);
   const [openAddDialog, setOpenAddDialog] = useState(false);
@@ -54,6 +55,7 @@ const Admin = () => {
   const [openUploadDialog, setOpenUploadDialog] = useState(false);
   const [selectedFile, setSelectedFile] = useState(null);
   const [alertInfo, setAlertInfo] = useState({ open: false, message: '', severity: 'info' });
+  const [openResetDialog, setOpenResetDialog] = useState(false);
   
   // Statistics
   const [stats, setStats] = useState({
@@ -274,6 +276,26 @@ const Admin = () => {
     setAlertInfo({ ...alertInfo, open: false });
   };
 
+  // Reset all attendees
+  const handleReset = async () => {
+    try {
+      setLoading(true);
+      const response = await axios.delete(`${API_URL}/attendees/reset`);
+      showAlert('All attendees have been cleared', 'success');
+      setOpenResetDialog(false);
+    } catch (error) {
+      console.error('Error resetting attendees:', error);
+      showAlert('Failed to reset attendees', 'error');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('isAuthenticated');
+    navigate('/login');
+  };
+
   // Enhanced columns with better styling
   const columns = [
     { 
@@ -420,15 +442,23 @@ const Admin = () => {
 
   return (
     <Container maxWidth="xl" sx={{ mt: 4, mb: 8 }}>
-      <Box sx={{ mb: 4 }}>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
         <Typography variant="h4" component="h1" gutterBottom color="primary" sx={{ fontWeight: 600 }}>
           <DashboardIcon sx={{ mr: 1, mb: -0.5 }} />
           Check-in Admin Panel
         </Typography>
-        <Typography variant="body1" color="text.secondary">
-          Manage attendees and queue status for the check-in process
-        </Typography>
+        <Button 
+          variant="outlined"
+          color="inherit"
+          startIcon={<LogoutIcon />}
+          onClick={handleLogout}
+        >
+          Logout
+        </Button>
       </Box>
+      <Typography variant="body1" color="text.secondary" sx={{ mb: 4 }}>
+        Manage attendees and queue status for the check-in process
+      </Typography>
       
       {/* Statistics Cards */}
       <Grid container spacing={3} sx={{ mb: 4 }}>
@@ -536,27 +566,34 @@ const Admin = () => {
             >
               Import from Spreadsheet
             </Button>
+            <Button 
+              variant="contained" 
+              color="error" 
+              startIcon={<RestartAltIcon />} 
+              onClick={() => setOpenResetDialog(true)}
+              sx={{ color: 'white' }}
+            >
+              Reset All
+            </Button>
           </Box>
         </Box>
         
         <Divider />
         
-        <Box sx={{ height: 600, width: '100%', p: 2 }}>
+        <Box sx={{ width: '100%', p: 2 }}>
           <DataGrid
             rows={attendees}
             columns={columns}
-            pageSizeOptions={[10, 25, 50, 100]}
+            autoHeight
+            disableRowSelectionOnClick
             initialState={{
-              pagination: {
-                paginationModel: { pageSize: 25 },
-              },
               sorting: {
                 sortModel: [{ field: 'queueNumber', sort: 'asc' }],
               },
             }}
+            pagination={false}
             loading={loading}
-            autoHeight
-            disableRowSelectionOnClick
+            hideFooter={true}
             processRowUpdate={(newRow, oldRow) => {
               // If queue number changed
               if (newRow.queueNumber !== oldRow.queueNumber) {
@@ -683,6 +720,27 @@ const Admin = () => {
             startIcon={<CloudUploadIcon />}
           >
             Upload
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Reset Confirmation Dialog */}
+      <Dialog open={openResetDialog} onClose={() => setOpenResetDialog(false)}>
+        <DialogTitle>
+          <Box sx={{ display: 'flex', alignItems: 'center' }}>
+            <RestartAltIcon sx={{ mr: 1, color: 'error.main' }} />
+            Reset All Attendees
+          </Box>
+        </DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            Are you sure you want to clear all attendees? This action cannot be undone.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 3 }}>
+          <Button onClick={() => setOpenResetDialog(false)} variant="outlined">Cancel</Button>
+          <Button onClick={handleReset} variant="contained" color="error">
+            Reset All
           </Button>
         </DialogActions>
       </Dialog>
