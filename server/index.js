@@ -27,6 +27,11 @@ app.use(cors({
 }));
 app.use(express.json());
 
+// Serve static files in production
+if (process.env.NODE_ENV === 'production') {
+  app.use(express.static(path.join(__dirname, '../client/build')));
+}
+
 // File upload configuration
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
@@ -400,10 +405,8 @@ setInterval(() => {
   io.emit('attendeesUpdated', { attendees });
 }, 60 * 1000);
 
-// Production setup
+// Serve React app in production
 if (process.env.NODE_ENV === 'production') {
-  app.use(express.static(path.join(__dirname, '../client/build')));
-  
   app.get('*', (req, res) => {
     res.sendFile(path.join(__dirname, '../client/build', 'index.html'));
   });
